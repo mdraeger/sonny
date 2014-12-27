@@ -3,9 +3,9 @@ package org.draegisoft.sonny.html
 import scala.util.parsing.combinator._
 import scala.util.parsing.input.CharSequenceReader
 
-import org.draegisoft.sonny._
+import org.draegisoft.sonny.{Dom, Element, Text}
 
-object HtmlParser extends Parsers {
+class HtmlParser extends JavaTokenParsers {
     
     def parseHtml: Parser[Dom] = ???
 
