@@ -8,7 +8,10 @@ lazy val root = (project in file(".")).
     settings(commonSettings: _*).
     settings(
         name := "sonny",
-        scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
+        scalacOptions ++= Seq("-unchecked", 
+                              "-deprecation", 
+                              "-feature",
+                              "-language:postfixOps"),
         libraryDependencies ++= Seq(
             "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
             "org.scalatest" % "scalatest_2.11" % "2.2.1" % "test"

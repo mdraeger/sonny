@@ -1,17 +1,24 @@
 package org.draegisoft.sonny
 
-import java.nio.charset.StandardCharsets
+object Dom {
 
-case class Dom(val node: NTree[NodeType])
+  type AttributeMap = Map[String, String]
+  type Node = NTree[NodeType]
 
-class NTree[T](a: T, children: List[NTree[T]]) 
+  def elem (name: String, atts: AttributeMap): (List[Node] => Node) = 
+    new NTree(Element(ElementData(name, atts)), _)
+
+  def text(t: String): Node = new NTree(Text(t), Nil)
+}
+
+class NTree[T](val a: T, val children: List[NTree[T]]) 
 
 sealed class NodeType
 
 case class Text(text: String) extends NodeType
 case class Element (data: ElementData) extends NodeType
 
-case class ElementData(tag: String, attributes: Map[String, String]) {
+case class ElementData(tag: String, attributes: Dom.AttributeMap) {
   def findID = findAttr ("id")
   def findAttr (attr: String) = attributes get (attr)
   def classes = (findAttr ("class")) match {
