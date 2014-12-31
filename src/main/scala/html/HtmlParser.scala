@@ -9,40 +9,45 @@ class HtmlParser extends RegexParsers {
 
     override def skipWhitespace = false
     
-    def parseHtml: Parser[Node] = ???
+    def parseHtml: Parser[Node] = (eol *) ~> (space?) ~> parseElement
 
-    def parseElement: Parser[Node] = openTag ~ content ~ endTag >> mkElement
+    def parseElement: Parser[Node] = (space?) ~>
+                                     openTag ~ 
+                                     (parseNode *) ~ 
+                                     endTag <~
+                                     (space?) <~
+                                     (eol *) >> mkElement
     
-    def parseText: Parser[Text] = charData ^^ Text 
+    def parseText: Parser[Node] = charData ^^ Dom.text 
 
-    private def attributes: Parser[AttributeMap] = (space ~> attribute *)  ^^ (_.toMap)
+    private def parseNode: Parser[Node] = parseElement | parseText
+
+    private def attributes: Parser[AttributeMap] = 
+      (space ~> attribute *)  ^^ (_.toMap)
 
     private def attribute: Parser[(String, String)] = 
         (name <~ equals) ~ string ^^ {case (k ~ v) => (k -> v)}
 
-    private def content: Parser[List[Node]] = 
-        (parseText?) ~ (parseElement ~(parseText?) *) ^^ {
-          case (Some(t1: Text), List(_)) => List(t1)
-        }
+    private def openTag = (eol *) ~> "<" ~> name ~ attributes <~ (space?) <~ ">" <~ (eol *)
 
-    private def openTag = "<" ~> name ~ attributes <~ (space?) <~ ">"
-
-    private def endTag = "</" ~> name <~ (space?) <~ ">"
+    private def endTag = (eol *) ~> "</" ~> name <~ (space?) <~ ">" <~ (eol *)
 
     private def equals       = (space?) ~ "=" ~ (space?)
     private def string       = doubleString | singleString
     private def charData     = "[^<]+".r
-    private def space        = """\s+""".r
-    private def name         = """(:|\w)((\-|\.|\d|:\w))*""".r
+    private def space        = ("""\s+""".r *) ^^ {_.mkString}
+    private def name         = """(:|\w)(\-|\.|\d|:|\w)*""".r 
     private def doubleString = "\"" ~> "[^\"]*".r <~ "\""
     private def singleString = "'" ~> "[^']*".r <~ "'"
+    private def separator    = eoi | eol
+    private def eol          = sys.props("line.separator").r
+    private def eoi          = """\z""".r
 
-    private def mkElement: (String~AttributeMap~List[Node]~String => Parser[Node]) = ???
-    /*{
+    private def mkElement: (String~AttributeMap~List[Node]~String => Parser[Node]) = {
       case startName ~ atts ~ children ~ endName =>
         if (startName == endName)
           success (Dom.elem (startName, atts)(children))
         else 
           err("tag mismatch")
-      } */
+      }
 }

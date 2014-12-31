@@ -11,12 +11,26 @@ object Dom {
   def text(t: String): Node = new NTree(Text(t), Nil)
 }
 
-class NTree[T](val a: T, val children: List[NTree[T]]) 
+class NTree[T](val a: T, val children: List[NTree[T]]) {
+  override def equals (other: Any) = other match {
+    case o: NTree[T] => a == o.a && children == o.children
+    case _ => false
+  }
+
+  private def str(indent: Int): String = 
+    " " * indent + a + '\n' + (children map (_.str (indent + 2)) mkString("\n")) 
+  override def toString = str(0)
+}
 
 sealed class NodeType
 
-case class Text(text: String) extends NodeType
-case class Element (data: ElementData) extends NodeType
+case class Text(text: String) extends NodeType {
+  override def toString = "Text: " + text
+}
+
+case class Element (data: ElementData) extends NodeType {
+  override def toString = "Element: " + (data toString)
+}
 
 case class ElementData(tag: String, attributes: Dom.AttributeMap) {
   def findID = findAttr ("id")
@@ -25,4 +39,7 @@ case class ElementData(tag: String, attributes: Dom.AttributeMap) {
     case None => Set.empty
     case Some (s) => s.split(' ').toSet
   }
+
+  override def toString = 
+    "%s [%s]".format (tag, attributes map { case (k, v) => k + '=' + v} mkString(", "))
 }
