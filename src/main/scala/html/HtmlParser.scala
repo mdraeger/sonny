@@ -2,13 +2,11 @@ package org.draegisoft.sonny.html
 
 import scala.util.parsing.combinator._
 
-import org.draegisoft.sonny.{Dom, Element, Text}
+import org.draegisoft.sonny.{Dom, Element, SonnyParser, Text}
 
-class HtmlParser extends RegexParsers {
+class HtmlParser extends SonnyParser {
     import Dom.{AttributeMap, Node}
 
-    override def skipWhitespace = false
-    
     def parseHtml: Parser[Node] = (eol *) ~> (space?) ~> parseElement
 
     def parseElement: Parser[Node] = (space?) ~>
@@ -31,17 +29,6 @@ class HtmlParser extends RegexParsers {
     private def openTag = (eol *) ~> "<" ~> name ~ attributes <~ (space?) <~ ">" <~ (eol *)
 
     private def endTag = (eol *) ~> "</" ~> name <~ (space?) <~ ">" <~ (eol *)
-
-    private def equals       = (space?) ~ "=" ~ (space?)
-    private def string       = doubleString | singleString
-    private def charData     = "[^<]+".r
-    private def space        = ("""\s+""".r *) ^^ {_.mkString}
-    private def name         = """(:|\w)(\-|\.|\d|:|\w)*""".r 
-    private def doubleString = "\"" ~> "[^\"]*".r <~ "\""
-    private def singleString = "'" ~> "[^']*".r <~ "'"
-    private def separator    = eoi | eol
-    private def eol          = sys.props("line.separator").r
-    private def eoi          = """\z""".r
 
     private def mkElement: (String~AttributeMap~List[Node]~String => Parser[Node]) = {
       case startName ~ atts ~ children ~ endName =>
