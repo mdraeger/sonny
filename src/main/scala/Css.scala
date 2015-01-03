@@ -2,8 +2,12 @@ package org.draegisoft.sonny
 
 import scala.util.parsing.combinator._
 
-class CssParser extends SonnyParser{
+object Css{
    type Stylesheet = List[Rule]
+}
+
+class CssParser extends SonnyParser{
+   import Css.Stylesheet
 
    def parseCss: Parser[Stylesheet] = (eol?) ~> 
                                       repsep(rule, (space?) ~ (eol?)) <~

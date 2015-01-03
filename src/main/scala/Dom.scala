@@ -11,7 +11,10 @@ object Dom {
   def text(t: String): Node = new NTree(Text(t), Nil)
 }
 
-class NTree[T](val a: T, val children: List[NTree[T]]) {
+class NTree[+T](val a: T, val children: List[NTree[T]]) {
+  def map[A] (f: T => A): NTree[A] = 
+    new NTree(f(a), children map { t => t map (f) })
+
   override def equals (other: Any) = other match {
     case o: NTree[T] => a == o.a && children == o.children
     case _ => false
