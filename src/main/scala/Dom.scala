@@ -25,7 +25,7 @@ class NTree[+T](val a: T, val children: List[NTree[T]]) {
   override def toString = str(0)
 }
 
-sealed class NodeType
+sealed abstract class NodeType
 
 case class Text(text: String) extends NodeType {
   override def toString = "Text: " + text
@@ -38,8 +38,8 @@ case class Element (data: ElementData) extends NodeType {
 case class ElementData(tag: String, attributes: Dom.AttributeMap) {
   def findID = findAttr ("id")
   def findAttr (attr: String) = attributes get (attr)
-  def classes = (findAttr ("class")) match {
-    case None => Set.empty
+  def classes: Set[String] = (findAttr ("class")) match {
+    case None => Set.empty[String]
     case Some (s) => s.split(' ').toSet
   }
 

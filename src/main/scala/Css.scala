@@ -3,7 +3,8 @@ package org.draegisoft.sonny
 import scala.util.parsing.combinator._
 
 object Css{
-   type Stylesheet = List[Rule]
+  type Stylesheet = List[Rule]
+  type Specificity = (Byte, Byte, Byte)
 }
 
 class CssParser extends SonnyParser{
@@ -69,11 +70,13 @@ class CssParser extends SonnyParser{
 case class Rule(val selector: List[Selector], 
                 val declaration: List[Declaration])
 
-abstract class Selector extends Ordering[Selector]{
-  type Specificity = (Byte, Byte, Byte)
+abstract class Selector {
+  import Css.Specificity
 
   def spec: Specificity
+}
 
+object SelectorOrdering extends Ordering[Selector]{
   /** 
     * define an ordering on selectors by lexigographically ordering
     * their specificity.
