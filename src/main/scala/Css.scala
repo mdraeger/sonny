@@ -5,6 +5,11 @@ import scala.util.parsing.combinator._
 object Css{
   type Stylesheet = List[Rule]
   type Specificity = (Byte, Byte, Byte)
+
+  def toPx(v: Value): Float = v match {
+    case Length(l, Px) => l
+    case _             => 0
+  }
 }
 
 class CssParser extends SonnyParser{
@@ -52,7 +57,7 @@ class CssParser extends SonnyParser{
    private def float: Parser[Float] = """[\d\.]+""".r ^^ 
                                       { java.lang.Float.parseFloat(_) }
 
-   private def unit: Parser[Unit] = "(p|P)(x|X)".r ^^ { case _ => Px() }
+   private def unit: Parser[Unit] = "(p|P)(x|X)".r ^^ { case _ => Px }
    
    private def color: Parser[Value] = '#' ~> """[0-9a-fA-F]{6}""".r ^^
                                        {case s =>
@@ -105,7 +110,7 @@ object NilS extends Simple(None, None, Nil){
 
 case class Declaration(name: String, value: Value)
 
-abstract class Value
+sealed abstract class Value
 
 case class Keyword(val keyword: String) extends Value {
   override def toString = "Keyword: " + keyword
@@ -121,7 +126,7 @@ case class ColorValue(val value: Color) extends Value{
 
 abstract class Unit
 
-case class Px() extends Unit {
+case object Px extends Unit {
   override def toString = "Px"
 }
 

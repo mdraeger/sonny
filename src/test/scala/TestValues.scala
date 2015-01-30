@@ -50,8 +50,8 @@ div.note { margin-bottom: 20px; padding: 10px; }
                                  , Declaration("color", ColorValue(
                                                Color(204,0,0,255)))))
                       ,Rule( List( Simple (Some("div"), None, "note"::Nil))
-                           , List( Declaration("margin-bottom", Length(20, Px()))
-                                 , Declaration("padding", Length(10, Px()))))
+                           , List( Declaration("margin-bottom", Length(20, Px))
+                                 , Declaration("padding", Length(10, Px))))
                       ,Rule( List( Simple (None, Some("answer"), Nil))
                            , List( Declaration("display", Keyword("none")))))
 
@@ -61,13 +61,13 @@ div.note { margin-bottom: 20px; padding: 10px; }
                                , Declaration ("color", (ColorValue(
                                                           Color(0,0,0,255))))))
                  , Rule ( List ( Simple ( Some("p"), None, List("inner")))
-                        , List ( Declaration ("padding", Length(20, Px())))))
+                        , List ( Declaration ("padding", Length(20, Px)))))
 
   // Styled dom 
   val styletree: StyledNode = {
     val rule1 = Map(("margin", Keyword("auto"))
                    , ("color", ColorValue(Color(0,0,0,255))))
-    val rule2 = Map(("padding", Length(17, Px())))
+    val rule2 = Map(("padding", Length(17, Px)))
     val propEmpty = Map.empty[String, Value]
     val attrEmpty = Map.empty[String, String]
     val test_ = new NTree((Text("Test"), propEmpty), Nil)

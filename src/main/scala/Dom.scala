@@ -11,7 +11,7 @@ object Dom {
   def text(t: String): Node = new NTree(Text(t), Nil)
 }
 
-class NTree[+T](val a: T, val children: List[NTree[T]]) {
+case class NTree[+T](val a: T, val children: List[NTree[T]]) {
   def map[A] (f: T => A): NTree[A] = 
     new NTree(f(a), children map { t => t map (f) })
 

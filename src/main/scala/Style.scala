@@ -72,4 +72,30 @@ object Style {
     }
   }
 
+  // added for Box implementation
+  def value(styledNode: StyledNode, name: String): Option[Value] = styledNode match {
+    case NTree((node, propertyMap), _) => propertyMap get(name)
+    case _ => None
+  }
+
+  def display(styledNode: StyledNode): Display = value(styledNode, "display") match {
+    case Some(Keyword("block")) => Block
+    case Some(Keyword("none"))  => DisplayNone
+    case _                      => Inline
+  }
+ 
+  def lookup(styledNode: StyledNode, keys: List[String], default: Value): Value = {
+    keys.foldLeft (default) { case (d, k) => value(styledNode, k) match {
+      case Some(v) => return v // we want the very first occurrence
+      case _       => d
+    }}
+  }
+
 }
+
+// added for block implementation
+sealed abstract class Display
+
+case object Inline      extends Display
+case object Block       extends Display
+case object DisplayNone extends Display
