@@ -70,15 +70,14 @@ object Layout {
     }
   }
 
-  def layout(box: LayoutBox, dim: Dimensions): Either[String, LayoutBox] = 
-    box match {
-      case NTree((_, boxType), _) => 
-        boxType match {
-          case BlockNode(_) => layoutBlock(dim, box)
-          case InlineNode(_) => ???
-          case AnonymousBlock => ???
-        }
+  def layout(box: LayoutBox, dim: Dimensions): Either[String, LayoutBox] = {
+    val NTree((_, boxType), _) = box
+    boxType match {
+      case BlockNode(_) => layoutBlock(dim, box)
+      case InlineNode(_) => ???
+      case AnonymousBlock => ???
     }
+  }
 
   def layoutBlock(dim: Dimensions, root: LayoutBox): Either[String, LayoutBox] = {
     def errorString: String => Either[String, LayoutBox] = s => Left(s)
@@ -90,132 +89,130 @@ object Layout {
   }
 
   def calcWidth(dim: Dimensions, box: LayoutBox) = {
-    box match {
-      case NTree((boxDim, boxType), children) =>
-        getStyledElem(box) match {
-          case Left(s:String) => Left(s)
-          case Right(style) =>
-            val auto = Keyword("auto")
-            val zero = Length(0, Px)
-            val w = value(style, "width") getOrElse auto
-            val vals = List( List("margin-left",        "margin")
-                           , List("margin-right",       "margin")
-                           , List("border-left-width",  "border-width")
-                           , List("border-right-width", "border-width")
-                           , List("padding-left",       "padding")
-                           , List("padding-right",      "padding")).map(
-                         keys => lookup(style, keys, zero))
-            val total = (w :: vals).map(toPx).sum
-            val underflow = dim.width - total
+   val NTree((boxDim, boxType), children) = box
+   getStyledElem(box) match {
+     case Left(s:String) => Left(s)
+     case Right(style) =>
+       val auto = Keyword("auto")
+       val zero = Length(0, Px)
+       val w = value(style, "width") getOrElse auto
+       val vals = List( List("margin-left",        "margin")
+                      , List("margin-right",       "margin")
+                      , List("border-left-width",  "border-width")
+                      , List("border-right-width", "border-width")
+                      , List("padding-left",       "padding")
+                      , List("padding-right",      "padding")).map(
+                    keys => lookup(style, keys, zero))
+       val total = (w :: vals).map(toPx).sum
+       val underflow = dim.width - total
 
-            def checkUnderflow(w: Value, mlf_mrt: (Value, Value)) = {
-              val (mlf, mrt) = mlf_mrt
-              (w == auto, mlf == auto, mrt == auto) match {
-                case (false, false, false) => (w, mlf, Length(toPx(mrt) + underflow, Px))
-                case (false, false, true) => (w, mlf, Length(underflow, Px))
-                case (false, true, false) => (w, Length(underflow, Px), mrt)
-                case (false, true, true) => (w, Length(underflow/2, Px), Length(underflow/2, Px))
-                case (true, a, b) => 
-                  val l = if (a) zero else mlf
-                  val r = if (b) zero else mrt
-                  if (underflow >=0 ) (Length(underflow, Px), l, r)
-                  else (zero, l, Length(toPx(r) + underflow, Px))
-              }
-            }
+       def checkUnderflow(w: Value, mlf_mrt: (Value, Value)) = {
+         val (mlf, mrt) = mlf_mrt
+         (w == auto, mlf == auto, mrt == auto) match {
+           case (false, false, false) => (w, mlf, Length(toPx(mrt) + underflow, Px))
+           case (false, false, true) => (w, mlf, Length(underflow, Px))
+           case (false, true, false) => (w, Length(underflow, Px), mrt)
+           case (false, true, true) => (w, Length(underflow/2, Px), Length(underflow/2, Px))
+           case (true, a, b) => 
+             val l = if (a) zero else mlf
+             val r = if (b) zero else mrt
+             if (underflow >=0 ) (Length(underflow, Px), l, r)
+             else (zero, l, Length(toPx(r) + underflow, Px))
+         }
+       }
 
-            def checkAutoMargins(x: Value, y: Value) = {
-              def check(a: Value) = if (a == auto) zero else a
+       def checkAutoMargins(x: Value, y: Value) = {
+         def check(a: Value) = if (a == auto) zero else a
 
-              if (w != auto && total > dim.width) (check(x), check(y))
-              else (x,y)
-            }
+         if (w != auto && total > dim.width) (check(x), check(y))
+         else (x,y)
+       }
 
-            val (ml__ :: mr__ :: Nil, vals_) = vals splitAt(2)
-            val (w_, ml_, mr_) = checkUnderflow(w, checkAutoMargins(ml__, mr__))
- 
-            val List(w__, ml, mr, blw, brw, plf, prt) = (List(w_, ml_, mr_) ++ vals_) map(toPx)
-            def updateDim(d: Dimensions) = {
-              val pad = d.padding
-              val mar = d.margin
-              val bor = d.border
-              val newPadding = EdgeSize(plf, prt, pad.top, pad.bottom)
-              val newMargin = EdgeSize(ml, mr, mar.top, mar.bottom)
-              val newBorder = EdgeSize(blw, brw, bor.top, bor.bottom)
-              Dimensions(d.x, d.y, w__, d.height, newPadding, newBorder, newMargin)
-            }
+       val (ml__ :: mr__ :: Nil, vals_) = vals splitAt(2)
+       val (w_, ml_, mr_) = checkUnderflow(w, checkAutoMargins(ml__, mr__))
 
-            Right(NTree((updateDim(boxDim), boxType), children))
-        }
-      }
+       val List(w__, ml, mr, blw, brw, plf, prt) = (List(w_, ml_, mr_) ++ vals_) map(toPx)
+       def updateDim(d: Dimensions) = {
+         val pad = d.padding
+         val mar = d.margin
+         val bor = d.border
+         val newPadding = EdgeSize(plf, prt, pad.top, pad.bottom)
+         val newMargin = EdgeSize(ml, mr, mar.top, mar.bottom)
+         val newBorder = EdgeSize(blw, brw, bor.top, bor.bottom)
+         Dimensions(d.x, d.y, w__, d.height, newPadding, newBorder, newMargin)
+       }
+
+       Right(NTree((updateDim(boxDim), boxType), children))
+    }
   }
 
   def calcPosition(dim: Dimensions, box: LayoutBox) = {
-    box match {
-      case NTree((boxDim, boxType), children) =>
-        getStyledElem(box) match {
-          case Left(s:String) => Left(s)
-          case Right(style) => 
-            val zero = Length(0, Px)
-            val vals = List( List("margin-top",          "margin")
-                           , List("margin-bottom",       "margin")
-                           , List("border-top-width",    "border-width")
-                           , List("border-bottom-width", "border-width")
-                           , List("padding-top",         "padding")
-                           , List("padding-bottom",      "padding")).map(
-                         keys => lookup(style, keys, zero)).map(toPx)
+    val NTree((boxDim, boxType), children) = box
+    getStyledElem(box) match {
+      case Left(s:String) => Left(s)
+      case Right(style) => 
+        val zero = Length(0, Px)
+        val vals = List( List("margin-top",          "margin")
+                       , List("margin-bottom",       "margin")
+                       , List("border-top-width",    "border-width")
+                       , List("border-bottom-width", "border-width")
+                       , List("padding-top",         "padding")
+                       , List("padding-bottom",      "padding")).map(
+                     keys => lookup(style, keys, zero)).map(toPx)
 
-            def updateDim(d: Dimensions, values: List[Float]) = {
-              val List(mt, mb, bt, bb, pt, pb) = values
-              val pad = d.padding
-              val mar = d.margin
-              val bor = d.border
-              val x_ = dim.x + mar.left + bor.left + pad.left
-              val y_ = dim.y + dim.height + pt + bt + mt
-              val newPadding = EdgeSize(pad.left, pad.right, pt, pb)
-              val newBorder = EdgeSize(bor.left, bor.right, bt, bb)
-              val newMargin = EdgeSize(mar.left, mar.right, mt, mb)
-              Dimensions(x_, y_, d.width, d.height, newPadding, newBorder, newMargin)
-            }
-
-            Right(NTree((updateDim(boxDim, vals), boxType), children))
+        def updateDim(d: Dimensions, values: List[Float]) = {
+          val List(mt, mb, bt, bb, pt, pb) = values
+          val pad = d.padding
+          val mar = d.margin
+          val bor = d.border
+          val x_ = dim.x + mar.left + bor.left + pad.left
+          val y_ = dim.y + dim.height + pt + bt + mt
+          val newPadding = EdgeSize(pad.left, pad.right, pt, pb)
+          val newBorder = EdgeSize(bor.left, bor.right, bt, bb)
+          val newMargin = EdgeSize(mar.left, mar.right, mt, mb)
+          Dimensions(x_, y_, d.width, d.height, newPadding, newBorder, newMargin)
         }
+
+        Right(NTree((updateDim(boxDim, vals), boxType), children))
     }
   }
 
   def layoutChildren(box: LayoutBox) = {
     def accumulate(current: (Dimensions, List[LayoutBox]),
-                   childNode: LayoutBox): (Dimensions, List[LayoutBox]) = {
-      val (d, acc) = current
-      val NTree((cDim, _), _) = childNode
-      c_ = layout(childNode, d) match {
-        case Left(s) => Left(s)
-        case Right(node) => node
+                   childNodes: List[LayoutBox]): Either[String, (Dimensions, List[LayoutBox])] = {
+      childNodes match {
+        case Nil => Right(current)
+        case head::rest =>
+          val (d, acc) = current
+          val NTree((cDim, _), _) = head
+          layout(head, d) match { 
+            case Left(s) => Left(s)
+            case Right(c_) =>
+              accumulate((Dimensions(d.x, d.y, d.width, d.height + marginBoxHeight(cDim),
+                          d.padding, d.border, d.margin), acc ++ List(c_)), rest)
+          }
       }
-      (Dimensions(d.x, d.y, d.width, d.height + marginBoxHeight(cDim),
-                  d.padding, d.border, d.margin), 
-       acc ++ List(c_))
     }
 
     val NTree((dim, x), cs) = box
-    val (dim_, cs_) = cs.foldLeft(dim, List.empty[LayoutBox])(accumulate _)
-    
-    Right(NTree((dim_, x), cs_))
+    accumulate((dim, List.empty[LayoutBox]), cs) match {
+      case Left(s) => Left(s)
+      case Right((dim_, cs_)) => Right(NTree((dim_, x), cs_))
+    }
   }
 
   def calcHeight(box: LayoutBox) = {
-    box match {
-      case NTree((boxDim, boxType), children) =>
-        getStyledElem(box) match {
-          case Left(s:String) => Left(s)
-          case Right(style) => 
-            val d = value(style, "height") match {
-              case Some(Length(h, Px)) => 
-                Dimensions(boxDim.x, boxDim.y, boxDim.width, h,
-                           boxDim.padding, boxDim.border, boxDim.margin)
-              case _ => boxDim // can be only None
-            }
-            Right(NTree((d, boxType), children))
+    val NTree((boxDim, boxType), children) = box
+    getStyledElem(box) match {
+      case Left(s:String) => Left(s)
+      case Right(style) => 
+        val d = value(style, "height") match {
+          case Some(Length(h, Px)) => 
+            Dimensions(boxDim.x, boxDim.y, boxDim.width, h,
+                       boxDim.padding, boxDim.border, boxDim.margin)
+          case _ => boxDim // can be only None
         }
+        Right(NTree((d, boxType), children))
     }
   }
 
