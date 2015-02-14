@@ -131,7 +131,9 @@ object Layout {
        val (ml__ :: mr__ :: Nil, vals_) = vals splitAt(2)
        val (w_, ml_, mr_) = checkUnderflow(w, checkAutoMargins(ml__, mr__))
 
-       val List(w__, ml, mr, blw, brw, plf, prt) = (List(w_, ml_, mr_) ++ vals_) map(toPx)
+       val List(w__, ml, mr, blw, brw, plf, prt) = 
+         (List(w_, ml_, mr_) ++ vals_) map(toPx)
+
        def updateDim(d: Dimensions) = {
          val pad = d.padding
          val mar = d.margin
@@ -179,7 +181,8 @@ object Layout {
 
   def layoutChildren(box: LayoutBox) = {
     def accumulate(current: (Dimensions, List[LayoutBox]),
-                   childNodes: List[LayoutBox]): Either[String, (Dimensions, List[LayoutBox])] = {
+                   childNodes: List[LayoutBox]): 
+                     Either[String, (Dimensions, List[LayoutBox])] = {
       childNodes match {
         case Nil => Right(current)
         case head::rest =>
